@@ -1,1 +1,215 @@
+#!/usr/bin/env piton
+#gerekli modülleri içe aktar
+ tarih  saatinden tarih saatini dt olarak içe aktar   
+ sys , rasgele , optparse içe aktarma
+deneyin : #python 3
+     urllib'i içe aktar istek olarak talep et  
+    urllib'den  . _ hata  alma  URLError , HTTPError
+    üç  =  Doğru
+ ImportError hariç : #python 2
+     urllib2'yi  gerekli olarak  içe aktar
+    üç  =  Yanlış
+
+#web sitesi tarafından engellenmemek için özel başlık
+custom_headers  = { "User-Agent" : "Mozilla/5.0 (Windows NT {}; rv:{}.0) Gecko/20100101 Firefox/{}.0" . biçim ( rastgele . Randint ( 7 , 11 ),
+                                                                                                           rastgele _ Randint ( 40 , 50 ),
+                                                                                                           rastgele _ Randint ( 35 , 50 )}
+
+def  AdjustDomainName ( domain ): urllib için #doğru alan adı
+    eğer  etki alanı . ( "www." ) ile başlar :
+        etki alanı  =  etki alanı [ 4 :]
+     etki  alanı değilse . ( "http" ) ile başlar :
+        etki alanı  =  "http://"  +  etki alanı
+    eğer  etki alanı . ( "/" ) ile biter :
+        etki alanı  =  etki alanı [: - 1 ]
+     alan adını iade et
+
+def  loadWordList ( wordlist_file , ext ): #sözlükten kontrol edilecek sayfaları yükle
+    deneyin :
+         wlf olarak açık ( wordlist_file , encoding = "utf8" ) ile : 
+            içerik  =  wlf . okuma satırları ()
+         aralıktaki i  için ( len ( içerik ) ): 
+            içerik [ ben ] =  içerik [ ben ]. şerit ( " \n " )
+        eğer  dahili . alt () ==  "a" :
+             içeriği iade et
+        başka :
+            [ içerikteki öğe için öğeyi  döndürürse öğe . _ _ ( ext ) veya öğe ile biter . ( "/" ) ile biter ]      
+     FileNotFoundError dışında :
+        sistem _ çıkış ( "WordList dosyası bulunamadı" )
+
+def  saveResults ( dosya_adı , bulunan_sayfalar , ilerleme = 0 ):
+    şimdi  =  dt . şimdi ()
+     f olarak açık ( "admin_sniffer_results.txt" , "a" ) ile : 
+        damga  =  "%d-%d-%d %d: %d: %d"  % ( şimdi . yıl , şimdi . ay , şimdi . gün , şimdi . saat , şimdi . dakika , şimdi . saniye )
+        yazdır ( damga , dosya = f )
+         found_pages içindeki sayfa  için : 
+            yazdır ( sayfa , dosya = f )
+        print ( "toplam ilerleme: %d \n ______________________________________________"  %  ilerleme , dosya = f )
+
+def  main ( etki alanı , ilerleme = 0 , ext = "a" , strict = False , save = True , görünür = True , wordlist_file = "admin_login.txt" ):
+    print ( "Çalışıyor.. darbesi için ctrl+c tuşuna basın." )
+    resp_codes  = { 403 : "istek yasaklandı" , 401 : "kimlik doğrulama gerekli" } #HTTP yanıt kodları
+    found  = [] #list, bulduğumuz sonuçları tutacak
+    domain  =  ayarAlanAdı ( domain ) #urllib için doğru alan adı
+
+    yazdır ( "wordlist yükleniyor" )
+    denemeler  =  loadWordList ( wordlist_file , ext )
+    print ( "aranıyor..." )
+    
+     girişimlerdeki bağlantı  için [ ilerleme :]: #wordlist dosyasındaki her sayfada döngü yapın 
+        deneyin :
+            site  =  etki alanı  +  "/"  +  bağlantı
+
+            görünürse  : #bağlantıları test edilirken göster
+                print ( "deniyor:" , end = " " )
+
+            panel_page  =  gerekli _ İstek ( site , başlıklar = özel_başlıklar )
+            
+            deneyin :
+                karşılık  =  gerekli _ urlopen ( site ) #sayfayı ziyaret etmeyi deneyin
+                bulundu . ( site ) ekle
+                print ( "%s sayfa geçerli!"  %  site )
+
+             e olarak HTTPError  hariç : #aldığımız HTTPError'u araştırın 
+                 üç ise :
+                    c  =  e . kod al ()
+                başka :
+                    c  =  e . kod ()
+                    
+                 c  ==  404 ise :
+                    görünürse  : _
+                        print ( "%s bulunamadı .."  %  site )
+                başka :
+                    print ( "%s Olası Panel.. %s"  % ( site , resp_codes [ c ]))
+                     katı değilse : _ 
+                        bulundu . ( site ) ekle
+
+             URLError hariç :
+                print ( "İnternet bağlantısı yok veya geçersiz URL" )
+                kırmak
+            
+             e2 olarak İstisna  hariç : 
+                yazdır ( "hata:{}... {}" . biçim ( site , e2 ))
+                devam etmek
+            ilerleme  +=  1
+            
+         KeyboardInterrupt hariç : #kullanıcı sıkılırsa her şeyi kaybetmediğimizden emin olun
+            yazdır ()
+            kırmak
+
+    bulunursa  : _
+        if  save : #sonuçları bir metin dosyasına kaydet
+            print ( "Sonuçlar Kaydediliyor:" )
+            saveResults ( "admin_sniffer_results.txt" , bulundu )
+
+            print ( "sonuçlar kaydedildi admin_sniffer_results.txt..." )
+
+        print ( "şu sonuçları buldu:"  +  " " .join ( bulundu ) + " toplam ilerleme: %s " % ilerleme )   
+
+    başka :
+        print ( "Herhangi bir Panel bulunamadı \n " \
+              +  "başka bir wordlist deneyin: %s"  %  ilerleme )
+
+def  getRobotsFile ( etki alanı ):
+    print ( "Robots.txt Dosyası ekleniyor" )
+    bulunan  = []
+    domain  =  ayarAlanAdı ( domain ) #urllib için doğru alan adı
+    
+    robots_file  =  etki alanı  +  "/robots.txt"
+    deneyin :
+        veri  =  gerekli _ urlopen ( robots_file ). oku (). kod çözme ( "utf-8" )
+         veri öğesi  için . _ böl ( " \n " ): 
+            eğer  eleman . ile başlar ( "İzin Verme:" ):
+                panel_page  =  etki alanı  +  öğe [ 10 :]
+                print ( "Kural bulundu: %s"  % ( panel_page ))
+                bulundu . ekle ( panel_sayfası )
+        bulunursa  : _
+            print ( "yönetici paneli bulunamdı sonuç kaydediliyor" )
+            saveResults ( "admin_sniffer_results.txt" , bulundu , 0 )
+            yazdır ( "bitti..." )
+        başka :
+            print ( "Herhangi bir panel bulunamadı" )
+    hariç :
+        sistem _ çıkış ( "RoBOTS.TXT bulanamdı" )
+
+if  __name__  ==  "__main__" :
+    print ( " +++++++++++++++++admin_panel_sniffer by MCoury+++++++++++++++++++" )
+    print ( " +, python 2 veya 3 + ile çalışmalıdır" )
+    print ( " +Yazar kötü niyetli kullanımdan sorumlu değildir! +" )
+    yazdır ( "         + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + _ _ _ _ _ + + + + + + + + + + _+ + + + + + + + +
+Tü rkç eleş tiren : Emyounoone \ n \ n " )
+    ayrıştırıcı  =  optparse . OptionParser ( "Kullanım: python %prog --domain <hedef etki alanı> " \
+                                   +  "--progress <komut dosyasının son çalıştırmada ulaştığı sayfanın dizini> " \
+                                   +  "--page_extension <web sitesi dili> --strict <Doğru veya Yanlış> " \
+                                   +  "--save <Sonuçlar bir metin dosyasına kaydedilsin mi?> " \
+                                   +  "--verbose <bağlantılar test edildikçe yazdırılsın mı?> --wordlist <kullanılacak sözlük dosyası>" \
+                                   +  "--robots <if True, alan adı dışında başka bir şey girmeyin>" )
+
+    domain_help  =  "hedef domain.örnek: google.com ya da www.example.org"
+    progress_help  =  "(isteğe bağlı) komut dosyasının son çalıştırmada ulaştığı sayfanın dizini. Komut dosyası " \
+                    +  "her çalıştırmadan sonra bu değeri görüntüler ve sonuçlar dosyasına kaydeder." \
+                    +  "0 baştan başlar."
+    page_extension_help  =  "(isteğe bağlı) web sitesinin html asp php kullanıp kullanmadığı... varsayılan değer, her şeyi kontrol eden 'a'dır"
+    strict_mode_help  =  "(isteğe bağlı, varsayılan False) True ise, yasak veya " \' ye karşılık gelen HTTP kodları
+                       +  "gerekli kimlik doğrulama göz ardı edilecek."
+    save_help  =  "(isteğe bağlı, varsayılan True), True ise sonuçlar bir txt dosyasına kaydedilecektir."
+    verbose_help  =  "(isteğe bağlı, varsayılan True) True ise, her bağlantı test edilirken gösterilecektir."
+    wordlist_help  =  "(isteğe bağlı, varsayılan, dahil edilen wordlist'tir) kullanılacak wordlist dosyasıdır."
+    robots_help  =  "(isteğe bağlı, varsayılan False) True ise komut dosyası robots.txt dosyasını almaya çalışır " \
+                  +  "genellikle yönetici panelini içeren dosya. Bunu True olarak ayarlarsanız girmeyin" \
+                  +  "hedef etki alanı dışında herhangi bir şey."
+
+    ayrıştırıcı _ add_option ( "--domain" , dest = "domain" , type = "string" , help = domain_help )
+    ayrıştırıcı _ add_option ( "--ilerleme" , dest = "ilerleme" , tip = "dize" , yardım = ilerleme_yardım )
+    ayrıştırıcı _ add_option ( "--page_extension" , dest = "page_ext" , type = "string" , help = page_extension_help )
+    ayrıştırıcı _ add_option ( "--strict" , dest = "strict" , type = "string" , help = solid_mode_help )
+    ayrıştırıcı _ add_option ( "--save" , dest = "kaydet" , type = "string" , help = save_help )
+    ayrıştırıcı _ add_option ( "--verbose" , dest = "ayrıntılı" , type = "string" , yardım = ayrıntılı_yardım )
+    ayrıştırıcı _ add_option ( "--wordlist" , dest = "wordlist" , type = "string" , help = wordlist_help )
+    ayrıştırıcı _ add_option ( "--robots" , dest = "robots" , type = "string" , help = robots_help )
+
+    ( seçenekler , bağımsız değişkenler ) =  ayrıştırıcı . ayrıştırma_args ()
+
+    değilse  seçenekler . _  etki alanı :
+        sistem _ çıkış ( "Hedef Domaini giriniz: \n \n %s"  %  ayrıştırıcı . kullanım )
+
+    deneyin :
+        strict_mode  =  değerlendirme ( seçenekler . katı . başlık ())
+    hariç :
+        sıkı_mode  =  Yanlış
+
+    deneyin :
+        kaydet  =  değerlendir ( seçenekler . kaydet . başlık ())
+    hariç :
+        kaydet  =  Doğru
+
+    deneyin :
+        ayrıntılı  =  değerlendirme ( seçenekler . ayrıntılı . başlık ())
+    hariç :
+        ayrıntılı  =  Doğru
+
+    değilse  seçenekler . _  sayfa_uzantısı :
+        page_ext  =  'a'
+    başka :
+        page_ext  =  seçenekler . sayfa_uzun
+
+    değilse  seçenekler . _  ilerleme :
+        ilerleme  =  0
+    başka :
+        ilerleme  =  int ( seçenekler . ilerleme )
+
+    değilse  seçenekler . _  kelime listesi :
+        kelime listesi  =  "admin_login.txt"
+    başka :
+        kelime listesi  =  seçenekler . kelime listesi
+
+    deneyin :
+        robotlar  =  değerlendir ( seçenekler . robotlar . başlık ())
+    hariç :
+        robotlar  =  Yanlış
+
+    eğer  robotlar :
+        getRobotsFile ( seçenekler . etki alanı )
+    başka :
+        ana ( seçenekler . etki alanı , ilerleme , sayfa_uzantısı , katı_mod , kaydet , ayrıntılı , kelime list
 .
